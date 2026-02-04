@@ -1,0 +1,12 @@
+.footer {
+    position: relative;
+    left: 0;
+    width: 100vw;
+    margin-left: calc(-50vw + 50%);
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 1.5rem 0;
+    margin-top: auto;
+    text-align: center;
+    box-sizing: border-box;
+}

@@ -1,0 +1,11 @@
+.admin-footer {
+    position: relative;
+    left: 0;
+    width: 100vw;
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    color: white;
+    padding: 1rem 0;
+    margin: 0;
+    text-align: center;
+    box-sizing: border-box;
+}
