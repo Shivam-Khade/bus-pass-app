@@ -5,7 +5,7 @@ const AdminFooter = () => {
     <footer
       style={{
         width: "100vw",
-        background: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
+        background: "linear-gradient(135deg, #34d399 0%, #059669 100%)",
         padding: "1.25rem 0",
         textAlign: "center",
       }}

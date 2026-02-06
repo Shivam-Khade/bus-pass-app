@@ -29,7 +29,7 @@
 .stat-card {
   animation: scaleIn 0.5s ease-out both;
   transition: all 0.3s ease;
-  border-left: 4px solid #667eea;
+  border-left: 4px solid #34d399;
   padding: 1.5rem;
   /* Reduced min-height slightly since text is bigger now, or keep it */
   min-height: 140px;
@@ -37,19 +37,19 @@
 
 .stat-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 8px 16px rgba(102, 126, 234, 0.2);
+  box-shadow: 0 8px 16px rgba(5, 150, 105, 0.2);
 }
 
 .stat-card:nth-child(2) {
-  border-left-color: #fab005;
+  border-left-color: #10b981;
 }
 
 .stat-card:nth-child(3) {
-  border-left-color: #51cf66;
+  border-left-color: #059669;
 }
 
 .stat-card:nth-child(4) {
-  border-left-color: #ff6b6b;
+  border-left-color: #047857;
 }
 
 @keyframes fadeIn {

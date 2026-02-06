@@ -15,7 +15,7 @@ const AdminNavbar = () => {
   return (
     <div style={{
       width: "100vw",
-      background: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
+      background: "linear-gradient(135deg, #34d399 0%, #059669 100%)",
       boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
       position: "sticky",
       top: 0,
@@ -28,7 +28,7 @@ const AdminNavbar = () => {
       }}>
         <Group justify="space-between">
           <Group gap="xl">
-            <Group gap="xs">
+            <Group gap="xs" style={{ cursor: "pointer" }} onClick={() => navigate("/admin")}>
               <IconBus size={32} color="white" stroke={2} />
               <Text size="xl" fw={700} c="white" style={{ letterSpacing: "0.5px" }}>
                 Bus Pass Admin
@@ -37,7 +37,7 @@ const AdminNavbar = () => {
                 color="white"
                 variant="filled"
                 leftSection={<IconShieldCheck size={14} />}
-                style={{ color: "#f5576c" }}
+                style={{ color: "#059669" }}
               >
                 ADMIN
               </Badge>
