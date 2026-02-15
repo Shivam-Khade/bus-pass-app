@@ -8,6 +8,9 @@ import {
   SimpleGrid,
   Loader,
   Center,
+  RingProgress,
+  ThemeIcon,
+  rem
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import {
@@ -15,13 +18,17 @@ import {
   IconClock,
   IconX,
   IconChartBar,
+  IconUsers,
+  IconTicket,
+  IconArrowUpRight,
+  IconArrowDownRight
 } from "@tabler/icons-react";
 import "./Dashboard.css";
-import adminImg1 from '../../assets/admin_img1.avif';
-import adminImg2 from '../../assets/admin_img2.avif';
+import { getCurrentUser } from "../../api/auth";
 
 const AdminDashboard = () => {
   const [loading, setLoading] = useState(true);
+  const currentUser = getCurrentUser();
   const [stats, setStats] = useState({
     total: 0,
     pending: 0,
@@ -36,7 +43,11 @@ const AdminDashboard = () => {
   const fetchStats = async () => {
     try {
       const BASE_URL = import.meta.env.VITE_BASE_URL || "http://localhost:8081";
-      const response = await fetch(`${BASE_URL}/api/pass/admin/all`);
+      const response = await fetch(`${BASE_URL}/api/pass/admin/all`, {
+        headers: {
+          "Authorization": `Bearer ${currentUser?.token}`
+        }
+      });
 
       if (response.ok) {
         const data = await response.json();
@@ -65,117 +76,169 @@ const AdminDashboard = () => {
   if (loading) {
     return (
       <Center style={{ minHeight: "60vh" }}>
-        <Loader size="lg" />
+        <Loader size="lg" color="teal" />
       </Center>
     );
   }
 
+  const approvalRate = stats.total > 0 ? Math.round((stats.approved / stats.total) * 100) : 0;
+
   return (
     <div className="admin-dashboard-container">
-      {/* MAIN CONTENT */}
-      <Container size="xl" className="admin-dashboard-content" style={{ overflow: "hidden", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+      <Container size="xl" className="admin-dashboard-content">
         <div className="dashboard-header">
-          <Title order={2} mb="md">
-            Admin Dashboard
-          </Title>
-          <Text c="dimmed" size="sm" mb="lg">
-            Overview of bus pass system analytics
-          </Text>
+          <Group justify="space-between" align="flex-start" mb="xl">
+            <div>
+              <Title order={2} mb={4}>
+                Dashboard Overview
+              </Title>
+              <Text c="dimmed" size="sm">
+                Welcome back, {currentUser?.name}. Here's what's happening today.
+              </Text>
+            </div>
+            <Text size="sm" c="dimmed" className="current-date">
+              {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+            </Text>
+          </Group>
         </div>
 
-        <SimpleGrid cols={{ base: 1, sm: 2, md: 4 }} spacing="lg" mb="xl">
-          <Card className="stat-card">
-            <Group justify="space-between" align="flex-start">
-              <div>
-                <Text size="md" c="dimmed" tt="uppercase" fw={700} mb={5}>
-                  Total Applications
-                </Text>
-                <Text size="3rem" fw={900} lh={1}>
-                  {stats.total}
-                </Text>
-              </div>
-              <IconChartBar size={50} color="#667eea" stroke={1.5} />
+        <SimpleGrid cols={{ base: 1, sm: 2, lg: 4 }} spacing="lg" mb="xl">
+          <Card className="stat-card glass-strong" padding="lg" radius="md">
+            <Group justify="space-between" align="flex-start" mb="md">
+              <Text size="xs" c="dimmed" fw={700} tt="uppercase" style={{ letterSpacing: '0.5px' }}>Total Applications</Text>
+              <ThemeIcon variant="light" color="blue" radius="md" size="lg">
+                <IconChartBar size={20} />
+              </ThemeIcon>
             </Group>
+            <Text className="stat-value" style={{ fontSize: '2rem', fontWeight: 700, lineHeight: 1 }}>{stats.total}</Text>
+            <Text size="xs" c="dimmed" mt="sm">All submissions received</Text>
           </Card>
 
-
-          <Card className="stat-card">
-            <Group justify="space-between">
-              <div>
-                <Text size="sm" c="dimmed" tt="uppercase" fw={700}>
-                  Pending
-                </Text>
-                <Text size="2rem" fw={800} c="yellow" lh={1}>
-                  {stats.pending}
-                </Text>
-              </div>
-              <IconClock size={42} color="#fab005" />
+          <Card className="stat-card glass-strong" padding="lg" radius="md">
+            <Group justify="space-between" align="flex-start" mb="md">
+              <Text size="xs" c="dimmed" fw={700} tt="uppercase" style={{ letterSpacing: '0.5px' }}>Pending Review</Text>
+              <ThemeIcon variant="light" color="yellow" radius="md" size="lg">
+                <IconClock size={20} />
+              </ThemeIcon>
             </Group>
+            <Text className="stat-value" style={{ fontSize: '2rem', fontWeight: 700, lineHeight: 1, color: 'var(--mantine-color-yellow-6)' }}>{stats.pending}</Text>
+            <Text size="xs" c="dimmed" mt="sm">Awaiting admin action</Text>
           </Card>
 
-          <Card className="stat-card">
-            <Group justify="space-between">
-              <div>
-                <Text size="sm" c="dimmed" tt="uppercase" fw={700}>
-                  Approved
-                </Text>
-                <Text size="2rem" fw={800} c="green" lh={1}>
-                  {stats.approved}
-                </Text>
-              </div>
-              <IconCheck size={42} color="#51cf66" />
+          <Card className="stat-card glass-strong" padding="lg" radius="md">
+            <Group justify="space-between" align="flex-start" mb="md">
+              <Text size="xs" c="dimmed" fw={700} tt="uppercase" style={{ letterSpacing: '0.5px' }}>Approved</Text>
+              <ThemeIcon variant="light" color="teal" radius="md" size="lg">
+                <IconCheck size={20} />
+              </ThemeIcon>
             </Group>
+            <Text className="stat-value" style={{ fontSize: '2rem', fontWeight: 700, lineHeight: 1, color: 'var(--mantine-color-teal-6)' }}>{stats.approved}</Text>
+            <Text size="xs" c="dimmed" mt="sm">Successfully approved</Text>
           </Card>
 
-          <Card className="stat-card">
-            <Group justify="space-between">
-              <div>
-                <Text size="sm" c="dimmed" tt="uppercase" fw={700}>
-                  Rejected
-                </Text>
-                <Text size="2rem" fw={800} c="red" lh={1}>
-                  {stats.rejected}
-                </Text>
-              </div>
-              <IconX size={42} color="#ff6b6b" />
+          <Card className="stat-card glass-strong" padding="lg" radius="md">
+            <Group justify="space-between" align="flex-start" mb="md">
+              <Text size="xs" c="dimmed" fw={700} tt="uppercase" style={{ letterSpacing: '0.5px' }}>Rejected</Text>
+              <ThemeIcon variant="light" color="red" radius="md" size="lg">
+                <IconX size={20} />
+              </ThemeIcon>
             </Group>
+            <Text className="stat-value" style={{ fontSize: '2rem', fontWeight: 700, lineHeight: 1, color: 'var(--mantine-color-red-6)' }}>{stats.rejected}</Text>
+            <Text size="xs" c="dimmed" mt="sm">Declined applications</Text>
           </Card>
         </SimpleGrid>
 
-        <Card shadow="sm" padding="xl" radius="md">
-          <Title order={3} mb="lg">
-            System Overview
-          </Title>
-          <SimpleGrid cols={{ base: 1, md: 3 }} spacing="xl">
-            <div>
-              <Text size="sm" c="dimmed" mb={5}>
-                Approval Rate
-              </Text>
-              <Text size="2rem" fw={800} c="green">
-                {stats.total > 0
-                  ? Math.round((stats.approved / stats.total) * 100)
-                  : 0}
-                %
-              </Text>
-            </div>
-            <div>
-              <Text size="sm" c="dimmed" mb={5}>
-                Pending Review
-              </Text>
-              <Text size="2rem" fw={800} c="yellow">
-                {stats.pending} applications
-              </Text>
-            </div>
-            <div>
-              <Text size="sm" c="dimmed" mb={5}>
-                Active Passes
-              </Text>
-              <Text size="2rem" fw={800} c="violet">
-                {stats.approved} passes
-              </Text>
-            </div>
-          </SimpleGrid>
-        </Card>
+        <SimpleGrid cols={{ base: 1, lg: 2 }} spacing="lg" mb="xl">
+          <Card className="glass content-card" radius="lg" padding="xl" pb="xl">
+            <Title order={3} mb="lg">Application Status Distribution</Title>
+            <Center>
+              <RingProgress
+                size={240}
+                thickness={20}
+                roundCaps
+                sections={[
+                  { value: stats.total > 0 ? (stats.approved / stats.total) * 100 : 0, color: 'teal', tooltip: `Approved: ${stats.approved}` },
+                  { value: stats.total > 0 ? (stats.pending / stats.total) * 100 : 0, color: 'yellow', tooltip: `Pending: ${stats.pending}` },
+                  { value: stats.total > 0 ? (stats.rejected / stats.total) * 100 : 0, color: 'red', tooltip: `Rejected: ${stats.rejected}` }
+                ]}
+                label={
+                  <Center>
+                    <div style={{ textAlign: 'center' }}>
+                      <Text fz={36} fw={700} lh={1}>
+                        {stats.total}
+                      </Text>
+                      <Text size="xs" c="dimmed" mt={8} tt="uppercase" fw={700}>
+                        Total
+                      </Text>
+                    </div>
+                  </Center>
+                }
+              />
+            </Center>
+            <SimpleGrid cols={3} mt="xl" spacing="xs">
+              <div style={{ textAlign: 'center' }}>
+                <Group justify="center" gap={4} mb={4}>
+                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--mantine-color-teal-6)' }}></div>
+                  <Text size="xs" c="dimmed" fw={600}>Approved</Text>
+                </Group>
+                <Text size="lg" fw={700} c="teal">{stats.approved}</Text>
+              </div>
+              <div style={{ textAlign: 'center' }}>
+                <Group justify="center" gap={4} mb={4}>
+                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--mantine-color-yellow-6)' }}></div>
+                  <Text size="xs" c="dimmed" fw={600}>Pending</Text>
+                </Group>
+                <Text size="lg" fw={700} c="yellow">{stats.pending}</Text>
+              </div>
+              <div style={{ textAlign: 'center' }}>
+                <Group justify="center" gap={4} mb={4}>
+                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--mantine-color-red-6)' }}></div>
+                  <Text size="xs" c="dimmed" fw={600}>Rejected</Text>
+                </Group>
+                <Text size="lg" fw={700} c="red">{stats.rejected}</Text>
+              </div>
+            </SimpleGrid>
+          </Card>
+
+          <Card className="glass content-card" radius="lg" padding="xl" pb="xl">
+            <Title order={3} mb="lg">Approval Rate</Title>
+            <Center>
+              <RingProgress
+                size={240}
+                thickness={20}
+                roundCaps
+                sections={[{ value: approvalRate, color: 'teal' }]}
+                label={
+                  <Center>
+                    <div style={{ textAlign: 'center' }}>
+                      <Text fz={48} fw={700} lh={1} c="teal">
+                        {approvalRate}%
+                      </Text>
+                      <Text size="xs" c="dimmed" mt={8} tt="uppercase" fw={700}>
+                        Success Rate
+                      </Text>
+                    </div>
+                  </Center>
+                }
+              />
+            </Center>
+            <Text size="sm" c="dimmed" ta="center" mt="xl">
+              Based on {stats.total} total applications processed
+            </Text>
+            {stats.total > 0 && (
+              <Group justify="center" gap="xl" mt="lg">
+                <div style={{ textAlign: 'center' }}>
+                  <Text size="xs" c="dimmed" mb={4}>Approved</Text>
+                  <Text size="md" fw={600}>{stats.approved}</Text>
+                </div>
+                <div style={{ textAlign: 'center' }}>
+                  <Text size="xs" c="dimmed" mb={4}>Total</Text>
+                  <Text size="md" fw={600}>{stats.total}</Text>
+                </div>
+              </Group>
+            )}
+          </Card>
+        </SimpleGrid>
       </Container>
     </div>
   );

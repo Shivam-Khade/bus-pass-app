@@ -32,7 +32,7 @@ public class UserDao {
     }
 
     public List<User> findAll() {
-        String sql = "SELECT id, name, email, role, active FROM users";
+        String sql = "SELECT id, name, email, role, active, photo_url, phone, address FROM users";
 
         return jdbcTemplate.query(sql, (rs, rowNum) -> {
             User u = new User();
@@ -41,6 +41,9 @@ public class UserDao {
             u.setEmail(rs.getString("email"));
             u.setRole(rs.getString("role"));
             u.setActive(rs.getBoolean("active"));
+            u.setPhotoUrl(rs.getString("photo_url"));
+            u.setPhone(rs.getString("phone"));
+            u.setAddress(rs.getString("address"));
             return u;
         });
     }
@@ -57,8 +60,30 @@ public class UserDao {
             u.setRole(rs.getString("role"));
             u.setPhone(rs.getString("phone"));
             u.setActive(rs.getBoolean("active"));
+            u.setAdharUrl(rs.getString("adhar_url"));
+            u.setBonafideUrl(rs.getString("bonafide_url"));
+            u.setPhotoUrl(rs.getString("photo_url"));
+            u.setAddress(rs.getString("address"));
             return u;
         }, email);
+    }
+
+    public User findById(int id) {
+        String sql = "SELECT * FROM users WHERE id = ?";
+
+        return jdbcTemplate.queryForObject(sql, (rs, rowNum) -> {
+            User u = new User();
+            u.setId(rs.getInt("id"));
+            u.setName(rs.getString("name"));
+            u.setEmail(rs.getString("email"));
+            u.setRole(rs.getString("role"));
+            u.setPhone(rs.getString("phone"));
+            u.setAdharUrl(rs.getString("adhar_url"));
+            u.setBonafideUrl(rs.getString("bonafide_url"));
+            u.setPhotoUrl(rs.getString("photo_url"));
+            u.setAddress(rs.getString("address"));
+            return u;
+        }, id);
     }
 
     public User getProfileByEmail(String email) {
@@ -71,6 +96,10 @@ public class UserDao {
             u.setEmail(rs.getString("email"));
             u.setRole(rs.getString("role"));
             u.setPhone(rs.getString("phone"));
+            u.setAdharUrl(rs.getString("adhar_url"));
+            u.setBonafideUrl(rs.getString("bonafide_url"));
+            u.setPhotoUrl(rs.getString("photo_url"));
+            u.setAddress(rs.getString("address"));
             return u;
         }, email);
     }
@@ -88,5 +117,20 @@ public class UserDao {
     public void deactivateUser(int userId) {
         String sql = "UPDATE users SET active = false WHERE id = ?";
         jdbcTemplate.update(sql, userId);
+    }
+
+    public void updateDocuments(int userId, String adharUrl, String bonafideUrl, String photoUrl) {
+        String sql = "UPDATE users SET adhar_url = ?, bonafide_url = ?, photo_url = ? WHERE id = ?";
+        jdbcTemplate.update(sql, adharUrl, bonafideUrl, photoUrl, userId);
+    }
+
+    public void updateAddress(int userId, String address) {
+        String sql = "UPDATE users SET address = ? WHERE id = ?";
+        jdbcTemplate.update(sql, address, userId);
+    }
+
+    public void updateRole(String email, String role) {
+        String sql = "UPDATE users SET role = ? WHERE email = ?";
+        jdbcTemplate.update(sql, role, email);
     }
 }

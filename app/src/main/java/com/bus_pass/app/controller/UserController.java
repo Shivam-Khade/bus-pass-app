@@ -1,8 +1,7 @@
 package com.bus_pass.app.controller;
 
-
 import com.bus_pass.app.dto.UserProfileResponse;
-import com.bus_pass.app.model.User;
+
 import com.bus_pass.app.service.UserService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;

@@ -1,80 +1,131 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Container,
-  Title,
-  Text,
-  Card,
   Select,
   Button,
+  Title,
+  FileInput,
+  Card,
   Group,
-  Stack,
+  Stepper,
+  Text,
+  Box,
+  rem
 } from "@mantine/core";
+import { useForm } from "@mantine/form";
 import { notifications } from "@mantine/notifications";
+import { IconUpload, IconCheck, IconUser, IconMapPin, IconFileText, IconCalendar } from "@tabler/icons-react";
 import { useNavigate } from "react-router-dom";
-import { IconTicket, IconArrowLeft } from "@tabler/icons-react";
-import { getCurrentUser } from "../../api/auth";
 import "./ApplyPass.css";
+
+import { getCurrentUser } from "../../api/auth";
 
 const ApplyPass = () => {
   const navigate = useNavigate();
-  const user = getCurrentUser();
+  const [active, setActive] = useState(0);
   const [loading, setLoading] = useState(false);
-  const [form, setForm] = useState({
-    passType: "",
+  const currentUser = getCurrentUser();
+
+  const form = useForm({
+    initialValues: {
+      source: "All Routes",
+      destination: "All Routes",
+      passType: "",
+      duration: 1,
+      adharCard: null,
+      bonafideCertificate: null,
+      photo: null,
+    },
+    validate: (values) => {
+      if (active === 0) {
+        return {
+          passType: !values.passType ? "Please select a pass duration" : null,
+        };
+      }
+      if (active === 1) {
+        return {
+          adharCard: !values.adharCard ? "Adhar card is required" : null,
+          bonafideCertificate: currentUser?.role === 'STUDENT' && !values.bonafideCertificate ? "Bonafide certificate is required" : null,
+          photo: !values.photo ? "Passport size photo is required" : null,
+        };
+      }
+      return {};
+    },
   });
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  useEffect(() => {
+    checkActivePass();
+  }, []);
 
-    if (!form.passType) {
-      notifications.show({
-        color: "red",
-        title: "Validation Error",
-        message: "Please select a pass type",
+  const checkActivePass = async () => {
+    try {
+      const BASE_URL = import.meta.env.VITE_BASE_URL || "http://localhost:8081";
+      const response = await fetch(`${BASE_URL}/user/pass?email=${encodeURIComponent(currentUser.email)}`, {
+        headers: { "Authorization": `Bearer ${currentUser?.token}` }
       });
-      return;
+      if (response.ok) {
+        const text = await response.text();
+        const data = text ? JSON.parse(text) : null;
+        if (data && data.status === 'ACTIVE') {
+          notifications.show({
+            id: 'active-pass-found',
+            title: 'Active Pass Found',
+            message: 'You already have an active bus pass.',
+            color: 'blue',
+          });
+          navigate('/user/my-pass');
+        }
+      }
+    } catch (error) {
+      console.error("Error checking active pass:", error);
     }
+  };
+
+  const nextStep = () => setActive((current) => (form.validate().hasErrors ? current : current + 1));
+  const prevStep = () => setActive((current) => (current > 0 ? current - 1 : current));
+
+  const handleSubmit = async () => {
+    if (form.validate().hasErrors) return;
 
     setLoading(true);
+    const formData = new FormData();
+    formData.append("source", "All Routes");
+    formData.append("destination", "All Routes");
+    formData.append("passType", form.values.passType); // "monthly", "quarterly", "yearly"
+    formData.append("duration", form.values.duration); // 1, 3, 12
+    formData.append("userEmail", currentUser.email);
+    formData.append("userName", currentUser.name);
+
+    formData.append("adharCard", form.values.adharCard);
+    formData.append("bonafideCertificate", form.values.bonafideCertificate);
+    formData.append("photo", form.values.photo);
 
     try {
       const BASE_URL = import.meta.env.VITE_BASE_URL || "http://localhost:8081";
-
       const response = await fetch(`${BASE_URL}/api/pass/apply`, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
+          "Authorization": `Bearer ${currentUser?.token}`
         },
-        body: JSON.stringify({
-          userId: user.id,
-          passType: form.passType,
-          routeId: 1, // Default route
-        }),
+        body: formData,
       });
 
-      if (!response.ok) {
-        const error = await response.text();
-        throw new Error(error || "Failed to submit application");
+      if (response.ok) {
+        notifications.show({
+          color: "green",
+          title: "Success",
+          message: "Application submitted successfully! Redirecting...",
+        });
+        setTimeout(() => navigate("/user/my-pass"), 1500);
+      } else {
+        const errorData = await response.text();
+        throw new Error(errorData || "Failed to submit application");
       }
-
-      notifications.show({
-        color: "green",
-        title: "Success! 🎉",
-        message: "Your bus pass application has been submitted successfully!",
-      });
-
-      setForm({
-        passType: "",
-      });
-
-      setTimeout(() => {
-        navigate("/user/my-pass");
-      }, 1500);
     } catch (error) {
       notifications.show({
         color: "red",
-        title: "Error",
-        message: error.message || "Failed to submit application",
+        title: "Submission Failed",
+        message: error.message,
       });
     } finally {
       setLoading(false);
@@ -83,98 +134,127 @@ const ApplyPass = () => {
 
   return (
     <div className="apply-pass-container">
-      <Container size="md">
-        <div className="page-header">
-          <Group gap="sm" mb="xl">
-            <div className="header-icon">
-              <IconTicket size={40} />
-            </div>
-            <div>
-              <Title order={1}>Apply for Bus Pass</Title>
-              <Text c="dimmed" size="sm">
-                Select your preferred pass type to get started
-              </Text>
-            </div>
-          </Group>
-        </div>
+      <Container size="sm" mt="xl">
+        <Title order={2} ta="center" mb="xl" className="apply-title">
+          New All-Route Pass
+        </Title>
 
-        <Card shadow="md" padding="xl" radius="md" className="application-form">
-          <form onSubmit={handleSubmit}>
-            <Stack gap="lg">
-              <Select
-                label="Pass Type"
-                placeholder="Select pass type"
-                required
-                size="md"
-                data={[
-                  {
-                    value: "MONTHLY",
-                    label: user?.role === "STUDENT"
-                      ? "Monthly Pass - ₹400/month (20% Discount)"
-                      : "Monthly Pass - ₹500/month"
-                  },
-                  {
-                    value: "QUARTERLY",
-                    label: user?.role === "STUDENT"
-                      ? "Quarterly Pass - ₹960/3 months (20% Discount)"
-                      : "Quarterly Pass - ₹1,200/3 months"
-                  },
-                  {
-                    value: "YEARLY",
-                    label: user?.role === "STUDENT"
-                      ? "Annual Pass - ₹3,200/year (20% Discount)"
-                      : "Annual Pass - ₹4,000/year"
-                  },
-                ]}
-                value={form.passType}
-                onChange={(value) => setForm({ ...form, passType: value })}
-                styles={{
-                  input: { fontSize: "16px" }
-                }}
-              />
+        <Card shadow="md" padding="xl" radius="lg" className="glass form-card">
+          <Stepper active={active} color="violet" mb="xl">
+            <Stepper.Step label="Duration" description="Select Validity" icon={<IconCalendar size={18} />} />
+            <Stepper.Step label="Documents" description="Upload Proofs" icon={<IconUpload size={18} />} />
+            <Stepper.Step label="Review" description="Confirm & Submit" icon={<IconCheck size={18} />} />
+          </Stepper>
 
-              <Group justify="space-between" mt="xl">
-                <Button
-                  variant="subtle"
-                  leftSection={<IconArrowLeft size={18} />}
-                  onClick={() => navigate("/user")}
-                  disabled={loading}
-                >
-                  Back to Dashboard
-                </Button>
-                <Button
-                  type="submit"
-                  loading={loading}
+          <Box mt="lg">
+            {active === 0 && (
+              <div className="step-content">
+                <Text size="sm" c="dimmed" mb="lg">
+                  This pass grants access to all routes within the network. Select a duration plan that suits you.
+                </Text>
+
+                <Select
+                  label="Select Pass Duration"
+                  placeholder="Choose a plan"
+                  data={[
+                    { value: "monthly", label: "Monthly (1 Month)" },
+                    { value: "quarterly", label: "Quarterly (3 Months)" },
+                    { value: "yearly", label: "Yearly (12 Months)" },
+                  ]}
+                  {...form.getInputProps("passType")}
+                  onChange={(value) => {
+                    form.setFieldValue('passType', value);
+                    if (value === 'monthly') form.setFieldValue('duration', 1);
+                    if (value === 'quarterly') form.setFieldValue('duration', 3);
+                    if (value === 'yearly') form.setFieldValue('duration', 12);
+                  }}
+                  mb="xl"
+                  variant="filled"
                   size="md"
-                  leftSection={<IconTicket size={18} />}
-                  gradient={{ from: "violet", to: "purple", deg: 135 }}
+                  checkIconPosition="right"
+                />
+              </div>
+            )}
+
+            {active === 1 && (
+              <div className="step-content">
+                <FileInput
+                  label="Adhar Card (PDF/Image)"
+                  placeholder="Upload Adhar Card"
+                  leftSection={<IconUpload size={14} />}
+                  accept="image/png,image/jpeg,application/pdf"
+                  {...form.getInputProps("adharCard")}
+                  mb="md"
+                  variant="filled"
+                  clearable
+                />
+                {currentUser?.role === 'STUDENT' && (
+                  <FileInput
+                    label="Bonafide Certificate"
+                    placeholder="Upload College ID/Bonafide"
+                    leftSection={<IconFileText size={14} />}
+                    accept="image/png,image/jpeg,application/pdf"
+                    {...form.getInputProps("bonafideCertificate")}
+                    mb="md"
+                    variant="filled"
+                    clearable
+                  />
+                )}
+                <FileInput
+                  label="Passport Size Photo"
+                  placeholder="Upload Photo"
+                  leftSection={<IconUser size={14} />}
+                  accept="image/png,image/jpeg"
+                  {...form.getInputProps("photo")}
+                  mb="md"
+                  variant="filled"
+                  clearable
+                />
+              </div>
+            )}
+
+            {active === 2 && (
+              <div className="step-content review-step">
+                <Title order={4} mb="md">Review Application</Title>
+                <Card withBorder padding="md" radius="md" mb="md" className="review-card">
+                  <Group justify="space-between" mb={10}>
+                    <Text c="dimmed" size="sm">Pass Access:</Text>
+                    <Text fw={600} c="violet">All Routes (Universal)</Text>
+                  </Group>
+
+                  <Group justify="space-between" mb={5}>
+                    <Text c="dimmed" size="sm">Validity:</Text>
+                    <Text fw={500}>{form.values.duration} Months</Text>
+                  </Group>
+                </Card>
+                <Text size="sm" c="dimmed" mt="md">
+                  By submitting, you confirm that all provided documents are authentic and valid.
+                </Text>
+              </div>
+            )}
+
+            <Group justify="space-between" mt="xl">
+              {active !== 0 && (
+                <Button variant="default" onClick={prevStep}>
+                  Back
+                </Button>
+              )}
+              {active !== 2 ? (
+                <Button onClick={nextStep} color="violet">
+                  Next Step
+                </Button>
+              ) : (
+                <Button
+                  onClick={handleSubmit}
+                  loading={loading}
                   variant="gradient"
+                  gradient={{ from: 'violet', to: 'indigo' }}
                 >
                   Submit Application
                 </Button>
-              </Group>
-            </Stack>
-          </form>
-        </Card>
-
-        <Card shadow="sm" padding="lg" mt="xl" radius="md" className="info-card">
-          <Title order={4} mb="md" c="violet">
-            📋 Important Information
-          </Title>
-          <Stack gap="xs">
-            <Text size="sm" c="dimmed">
-              ✓ Processing time: 2-3 business days
-            </Text>
-            <Text size="sm" c="dimmed">
-              ✓ You will be notified via email once approved
-            </Text>
-            <Text size="sm" c="dimmed">
-              ✓ Make sure all information is accurate
-            </Text>
-            <Text size="sm" c="dimmed">
-              ✓ Payment required after approval
-            </Text>
-          </Stack>
+              )}
+            </Group>
+          </Box>
         </Card>
       </Container>
     </div>

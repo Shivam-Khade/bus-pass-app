@@ -1,135 +1,147 @@
-/* My Pass Container */
-.my-pass-container {
-    animation: fadeIn 0.6s ease-in;
-    min-height: 60vh;
+/* MyPass CSS */
+
+.mypass-container {
+    padding-bottom: 3rem;
+    animation: zoomIn 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+.digital-ticket {
+    background: linear-gradient(135deg, white 0%, #f5f5f5 100%);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+    position: relative;
+    max-width: 400px;
+    margin: 0 auto;
 }
 
-/* Page Header */
-.page-header {
-    animation: slideDown 0.7s ease-out;
+.expiry-counter-card {
+    max-width: 400px;
+    margin: 0 auto;
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-@keyframes slideDown {
-    from {
-        opacity: 0;
-        transform: translateY(-20px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.header-icon {
-    width: 70px;
-    height: 70px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    animation: pulse 2s ease-in-out infinite;
-}
-
-@keyframes pulse {
-
-    0%,
-    100% {
-        transform: scale(1);
-        box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.7);
-    }
-
-    50% {
-        transform: scale(1.05);
-        box-shadow: 0 0 0 10px rgba(102, 126, 234, 0);
-    }
-}
-
-/* Pass Card */
-.pass-card {
-    animation: scaleIn 0.5s ease-out both;
+.download-btn-highlight:hover {
+    box-shadow: 0 0 15px rgba(124, 92, 252, 0.5);
+    transform: translateY(-2px);
     transition: all 0.3s ease;
-    border-left: 4px solid #667eea;
-    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
 }
 
-.pass-card:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 12px 24px rgba(102, 126, 234, 0.2);
+.digital-ticket::before,
+.digital-ticket::after {
+    content: '';
+    position: absolute;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--color-bg);
+    top: 70%;
+    transform: translateY(-50%);
+    z-index: 2;
 }
 
-@keyframes scaleIn {
-    from {
-        opacity: 0;
-        transform: scale(0.9) translateY(20px);
-    }
-
-    to {
-        opacity: 1;
-        transform: scale(1) translateY(0);
-    }
+.digital-ticket::before {
+    left: -16px;
 }
 
-.pass-card-header {
-    border-bottom: 1px solid #e9ecef;
-    padding-bottom: 0.5rem;
+.digital-ticket::after {
+    right: -16px;
 }
 
-.pass-card-body {
-    padding-top: 0.5rem;
+.ticket-header {
+    background: linear-gradient(135deg, #7c5cfc 0%, #5b3fd9 100%);
+    padding: 1.5rem 1.5rem 0.5rem 1.5rem;
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
-/* Approved Badge */
-.approved-badge {
-    background: linear-gradient(135deg, #51cf66 0%, #37b24d 100%);
-    padding: 0.5rem 1rem;
-    border-radius: 8px;
-    margin-top: 0.5rem;
-    animation: slideInUp 0.5s ease-out;
-}
-
-@keyframes slideInUp {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-/* Empty State */
-.empty-state {
-    animation: fadeIn 0.8s ease-out;
-    min-height: 300px;
+.header-content {
     display: flex;
     align-items: center;
-    justify-content: center;
 }
 
-/* Responsive */
-@media (max-width: 768px) {
-    .page-header {
-        text-align: center;
+.ticket-body {
+    padding: 1.5rem;
+    background: white;
+    color: #333;
+}
+
+.ticket-body .passenger-name {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #1a1a2e;
+    margin-bottom: 0.2rem;
+}
+
+.qr-container {
+    padding: 0.5rem;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background: white;
+}
+
+.route-timeline {
+    position: relative;
+    padding: 1rem 0;
+    border-top: 1px dashed #ddd;
+    border-bottom: 1px dashed #ddd;
+    margin: 1.5rem 0;
+    display: flex;
+    justify-content: space-between;
+}
+
+.route-line {
+    position: absolute;
+    top: 50%;
+    left: 20%;
+    right: 20%;
+    height: 2px;
+    background: #e0e0e0;
+    z-index: 0;
+}
+
+.route-point {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    background: white;
+    padding: 0 0.5rem;
+}
+
+.point-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin: 0 auto 0.5rem auto;
+    border: 3px solid white;
+    box-shadow: 0 0 0 1px #ccc;
+}
+
+.point-dot.source {
+    background: #7c5cfc;
+}
+
+.point-dot.destination {
+    background: #ef4444;
+}
+
+.ticket-stub {
+    background: #f8f9fa;
+    padding: 1rem;
+    border-top: 2px dashed #ddd;
+    text-align: center;
+}
+
+@keyframes zoomIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
     }
 
-    .header-icon {
-        margin: 0 auto;
+    to {
+        opacity: 1;
+        transform: scale(1);
     }
 }

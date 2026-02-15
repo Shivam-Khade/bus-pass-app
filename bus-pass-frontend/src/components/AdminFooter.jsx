@@ -1,19 +1,22 @@
-import { Container, Text } from "@mantine/core";
+import { Container, Text, Group } from "@mantine/core";
+import { IconBus } from "@tabler/icons-react";
+import "./AdminFooter.css";
 
 const AdminFooter = () => {
   return (
-    <footer
-      style={{
-        width: "100vw",
-        background: "linear-gradient(135deg, #34d399 0%, #059669 100%)",
-        padding: "1.25rem 0",
-        textAlign: "center",
-      }}
-    >
-      <Container size="lg">
-        <Text size="sm" c="rgba(255,255,255,0.85)">
-          © 2026 Bus Pass System. All rights reserved.
-        </Text>
+    <footer className="admin-footer glass">
+      <Container size="xl">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Group gap="xs">
+            <IconBus size={20} color="var(--admin-primary-light)" />
+            <Text size="sm" fw={600} c="dimmed">
+              Bus Pass Admin
+            </Text>
+          </Group>
+          <Text size="xs" c="dimmed">
+            © 2026 Admin Panel. Secure & Encrypted.
+          </Text>
+        </div>
       </Container>
     </footer>
   );

@@ -13,4 +13,8 @@ public class LoginResponse {
     private String role;
     private String name;
     private String token;
+    private String adharUrl;
+    private String bonafideUrl;
+    private String photoUrl;
+    private String address;
 }

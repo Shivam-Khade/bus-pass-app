@@ -1,14 +1,10 @@
 package com.bus_pass.app.service;
 
 import com.bus_pass.app.dao.UserDao;
-import com.bus_pass.app.dto.LoginRequest;
-import com.bus_pass.app.dto.LoginResponse;
 import com.bus_pass.app.dto.RegisterRequest;
 import com.bus_pass.app.dto.UserProfileResponse;
 import com.bus_pass.app.model.User;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -17,13 +13,20 @@ public class UserService {
 
     private final UserDao userDao;
     private final org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
+    private final com.bus_pass.app.util.FileStorageUtil fileStorageUtil;
 
-    public UserService(UserDao userDao, org.springframework.security.crypto.password.PasswordEncoder passwordEncoder) {
+    public UserService(UserDao userDao, org.springframework.security.crypto.password.PasswordEncoder passwordEncoder,
+            com.bus_pass.app.util.FileStorageUtil fileStorageUtil) {
         this.userDao = userDao;
         this.passwordEncoder = passwordEncoder;
+        this.fileStorageUtil = fileStorageUtil;
     }
 
     public void register(RegisterRequest request) {
+        if (userDao.getRoleByEmail(request.getEmail()) != null) {
+            throw new RuntimeException("Email is already registered");
+        }
+
         User user = new User();
         user.setName(request.getName());
         user.setEmail(request.getEmail());
@@ -43,6 +46,10 @@ public class UserService {
         res.setEmail(user.getEmail());
         res.setRole(user.getRole());
         res.setPhone(user.getPhone());
+        res.setAdharUrl(user.getAdharUrl());
+        res.setBonafideUrl(user.getBonafideUrl());
+        res.setPhotoUrl(user.getPhotoUrl());
+        res.setAddress(user.getAddress());
 
         return res;
     }
@@ -67,5 +74,34 @@ public class UserService {
 
     public User getUserByEmail(String email) {
         return userDao.findByEmail(email);
+    }
+
+    public void uploadDocuments(String email, org.springframework.web.multipart.MultipartFile adhar,
+            org.springframework.web.multipart.MultipartFile bonafide,
+            org.springframework.web.multipart.MultipartFile photo) {
+        User user = userDao.findByEmail(email);
+
+        String adharUrl = user.getAdharUrl();
+        String bonafideUrl = user.getBonafideUrl();
+        String photoUrl = user.getPhotoUrl();
+
+        if (adhar != null && !adhar.isEmpty()) {
+            adharUrl = fileStorageUtil.storeFile(adhar);
+        }
+
+        if (bonafide != null && !bonafide.isEmpty()) {
+            bonafideUrl = fileStorageUtil.storeFile(bonafide);
+        }
+
+        if (photo != null && !photo.isEmpty()) {
+            photoUrl = fileStorageUtil.storeFile(photo);
+        }
+
+        userDao.updateDocuments(user.getId(), adharUrl, bonafideUrl, photoUrl);
+    }
+
+    public void updateAddress(String email, String address) {
+        User user = userDao.findByEmail(email);
+        userDao.updateAddress(user.getId(), address);
     }
 }

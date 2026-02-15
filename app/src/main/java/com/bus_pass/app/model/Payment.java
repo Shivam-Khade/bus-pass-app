@@ -10,4 +10,9 @@ public class Payment {
     private double amount;
     private String status;
     private LocalDateTime paymentDate;
+
+    // Razorpay fields
+    private String razorpayOrderId;
+    private String razorpayPaymentId;
+    private String razorpaySignature;
 }

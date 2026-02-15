@@ -15,15 +15,24 @@ export const login = async (email, password) => {
 
   const data = await response.json();
 
-  // Store user data only (no token)
-  localStorage.setItem('user', JSON.stringify({
-    id: data.id,
-    email: data.email,
-    role: data.role,
-    name: data.name,
-  }));
+  // Store full user data including token
+  localStorage.setItem('user', JSON.stringify(data));
 
   return data;
+};
+
+// Send OTP function
+export const sendOtp = async (email) => {
+  const response = await fetch(`${BASE_URL}/auth/send-otp?email=${encodeURIComponent(email)}`, {
+    method: 'POST',
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(error || 'Failed to send OTP');
+  }
+
+  return await response.text();
 };
 
 // Register function

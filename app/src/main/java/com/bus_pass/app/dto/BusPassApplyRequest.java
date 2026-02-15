@@ -5,6 +5,6 @@ import lombok.Data;
 @Data
 public class BusPassApplyRequest {
     private int userId;
-    private int routeId;
-    private String passType;   // MONTHLY / QUARTERLY
+    private String passType; // MONTHLY / QUARTERLY
+    private String otp;
 }

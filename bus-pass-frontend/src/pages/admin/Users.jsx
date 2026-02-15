@@ -4,27 +4,58 @@ import {
   Title,
   Card,
   Badge,
+  Group,
   Table,
+  Button,
   Loader,
   Center,
   Text,
-  Button,
-  Group,
   ActionIcon,
-  Modal
+  Tooltip,
+  TextInput,
+  Select,
+  Modal,
+  Avatar,
+  Menu,
+  Dialog
 } from "@mantine/core";
-import { useDisclosure } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
-import { IconTrash, IconAlertTriangle } from "@tabler/icons-react";
-import { getCurrentUser } from "../../api/auth";
+import { useForm } from "@mantine/form";
+import { useDisclosure } from "@mantine/hooks";
+import {
+  IconUser,
+  IconSearch,
+  IconFilter,
+  IconDownload,
+  IconDotsVertical,
+  IconEdit,
+  IconTrash
+} from "@tabler/icons-react";
 import "./Users.css";
+
+import { getCurrentUser } from "../../api/auth";
 
 const Users = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [userToDelete, setUserToDelete] = useState(null);
+  const [search, setSearch] = useState("");
   const [opened, { open, close }] = useDisclosure(false);
   const currentUser = getCurrentUser();
+
+  const form = useForm({
+    initialValues: {
+      name: '',
+      email: '',
+      password: '',
+      role: 'USER',
+      phone: ''
+    },
+    validate: {
+      name: (value) => (value.length < 2 ? 'Name must have at least 2 letters' : null),
+      email: (value) => (/^\S+@\S+$/.test(value) ? null : 'Invalid email'),
+      password: (value) => (value.length < 6 ? 'Password must be at least 6 characters' : null),
+    },
+  });
 
   useEffect(() => {
     fetchUsers();
@@ -33,19 +64,17 @@ const Users = () => {
   const fetchUsers = async () => {
     try {
       const BASE_URL = import.meta.env.VITE_BASE_URL || "http://localhost:8081";
-      // Fetch all users
-      const response = await fetch(`${BASE_URL}/admin/users?adminEmail=${currentUser?.email}`);
+      const response = await fetch(`${BASE_URL}/api/admin/users`, {
+        headers: {
+          "Authorization": `Bearer ${currentUser?.token}`
+        }
+      });
 
       if (response.ok) {
         const data = await response.json();
-        // Filter only active users
-        const activeUsers = data.filter(user => user.active);
-        setUsers(activeUsers);
-      } else {
-        throw new Error("Failed to fetch users");
+        setUsers(data);
       }
     } catch (error) {
-      console.error("Error fetching users:", error);
       notifications.show({
         color: "red",
         title: "Error",
@@ -56,31 +85,25 @@ const Users = () => {
     }
   };
 
-  const confirmDelete = (user) => {
-    setUserToDelete(user);
-    open();
-  };
-
-  const handleDelete = async () => {
-    if (!userToDelete) return;
+  const deleteUser = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this user? This cannot be undone.")) return;
 
     try {
       const BASE_URL = import.meta.env.VITE_BASE_URL || "http://localhost:8081";
-      const response = await fetch(`${BASE_URL}/admin/users/${userToDelete.id}?adminEmail=${currentUser?.email}`, {
+      const response = await fetch(`${BASE_URL}/api/admin/users/${id}`, {
         method: "DELETE",
+        headers: {
+          "Authorization": `Bearer ${currentUser?.token}`
+        }
       });
 
       if (response.ok) {
         notifications.show({
           color: "green",
           title: "Success",
-          message: "User deactivated successfully",
+          message: "User deleted successfully",
         });
-        // Remove from list
-        setUsers(users.filter((user) => user.id !== userToDelete.id));
-        close();
-      } else {
-        throw new Error("Failed to delete user");
+        fetchUsers();
       }
     } catch (error) {
       notifications.show({
@@ -91,86 +114,231 @@ const Users = () => {
     }
   };
 
+  const handleAddUser = async (values) => {
+    try {
+      const BASE_URL = import.meta.env.VITE_BASE_URL || "http://localhost:8081";
+      const response = await fetch(`${BASE_URL}/api/admin/users`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${currentUser?.token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(values)
+      });
+
+      if (response.ok) {
+        notifications.show({ title: "Success", message: "User added successfully", color: "green" });
+        close();
+        form.reset();
+        fetchUsers();
+      } else {
+        const errorText = await response.text();
+        // Extract message from Spring Boot error JSON if present
+        let msg = errorText;
+        try {
+          const json = JSON.parse(errorText);
+          msg = json.message || json.error || errorText;
+        } catch (e) { /* ignore */ }
+        throw new Error(msg || "Failed to add user");
+      }
+    } catch (error) {
+      notifications.show({ title: "Error", message: error.message, color: "red" });
+    }
+  };
+
+  const handleExport = () => {
+    if (!users.length) return;
+    const headers = ["ID", "Name", "Email", "Role", "Phone"];
+    const rows = users.map(u => [u.id, `"${u.name}"`, u.email, u.role, u.phone || ""]);
+    const csvContent = [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `users_export_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const filteredUsers = users.filter((user) =>
+    user.name?.toLowerCase().includes(search.toLowerCase()) ||
+    user.email?.toLowerCase().includes(search.toLowerCase())
+  );
+
   if (loading) {
     return (
       <Center style={{ minHeight: "50vh" }}>
-        <Loader size="lg" />
+        <Loader size="lg" color="teal" />
       </Center>
     );
   }
 
   return (
     <div className="users-container">
-      <Container size="xl">
-        <Title order={1} mb="xl" mt={50}>
-          Active Users
-        </Title>
+      <Container size="xl" mt="xl">
+        <Group justify="space-between" mb="lg">
+          <div>
+            <Title order={2}>User Management</Title>
+            <Text c="dimmed" size="sm">Administer system users and permissions</Text>
+          </div>
+          <Group>
+            <Button leftSection={<IconDownload size={16} />} variant="default" onClick={handleExport}>Export</Button>
+            <Button leftSection={<IconUser size={16} />} variant="filled" color="teal" onClick={open}>Add User</Button>
+          </Group>
+        </Group>
 
-        <Card shadow="md" padding="lg" radius="md">
-          <div style={{ overflowX: "hidden" }}>
-            <Table striped highlightOnHover verticalSpacing="sm">
+        <Card shadow="sm" radius="lg" className="glass table-card" padding={0}>
+          <div className="table-toolbar">
+            <TextInput
+              placeholder="Search users..."
+              leftSection={<IconSearch size={16} />}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              style={{ flex: 1, maxWidth: 400 }}
+            />
+            <Tooltip label="Filter list">
+              <ActionIcon variant="light" color="gray" size="lg">
+                <IconFilter size={18} />
+              </ActionIcon>
+            </Tooltip>
+          </div>
+
+          {/* Desktop Table View */}
+          <div style={{ overflowX: "auto" }}>
+            <Table striped highlightOnHover horizontalSpacing="md" verticalSpacing="sm">
               <Table.Thead>
                 <Table.Tr>
-                  <Table.Th>ID</Table.Th>
                   <Table.Th>Name</Table.Th>
                   <Table.Th>Email</Table.Th>
                   <Table.Th>Role</Table.Th>
+                  <Table.Th>Status</Table.Th>
                   <Table.Th>Actions</Table.Th>
                 </Table.Tr>
               </Table.Thead>
               <Table.Tbody>
-                {users.map((user) => (
-                  <Table.Tr key={user.id}>
-                    <Table.Td>{user.id}</Table.Td>
-                    <Table.Td>
-                      <Text fw={500}>{user.name}</Text>
-                    </Table.Td>
-                    <Table.Td>{user.email}</Table.Td>
-                    <Table.Td>
-                      <Badge color={user.role === "ADMIN" ? "red" : "blue"} variant="light">
-                        {user.role}
-                      </Badge>
-                    </Table.Td>
-                    <Table.Td>
-                      {user.role !== 'ADMIN' && (
-                        <Button
-                          color="red"
+                {filteredUsers.length > 0 ? (
+                  filteredUsers.map((user) => (
+                    <Table.Tr key={user.id}>
+                      <Table.Td>
+                        <Group gap="sm" justify="flex-start">
+                          <Avatar color="blue" radius="xl">{user.name?.charAt(0)}</Avatar>
+                          <Text size="sm" fw={500}>{user.name}</Text>
+                        </Group>
+                      </Table.Td>
+                      <Table.Td>
+                        <Text size="sm" c="dimmed">{user.email}</Text>
+                      </Table.Td>
+                      <Table.Td>
+                        <Badge
+                          color={user.role === "ADMIN" ? "red" : "blue"}
                           variant="light"
-                          size="xs"
-                          leftSection={<IconTrash size={14} />}
-                          onClick={() => confirmDelete(user)}
                         >
-                          Delete
-                        </Button>
-                      )}
+                          {user.role}
+                        </Badge>
+                      </Table.Td>
+                      <Table.Td>
+                        <Badge color="green" variant="dot">Active</Badge>
+                      </Table.Td>
+                      <Table.Td style={{ textAlign: 'center' }}>
+                        <Group gap="xs" justify="center">
+                          <Tooltip label="Delete">
+                            <ActionIcon
+                              variant="light"
+                              color="red"
+                              onClick={() => deleteUser(user.id)}
+                              disabled={user.role === "ADMIN"} // Prevent deleting admins for safety
+                            >
+                              <IconTrash size={16} />
+                            </ActionIcon>
+                          </Tooltip>
+                        </Group>
+                      </Table.Td>
+                    </Table.Tr>
+                  ))
+                ) : (
+                  <Table.Tr>
+                    <Table.Td colSpan={5}>
+                      <Center p="xl">
+                        <Text c="dimmed">No users found.</Text>
+                      </Center>
                     </Table.Td>
                   </Table.Tr>
-                ))}
+                )}
               </Table.Tbody>
             </Table>
           </div>
 
-          {users.length === 0 && (
-            <Center p="xl">
-              <Text c="dimmed">No active users found</Text>
-            </Center>
-          )}
+          {/* Mobile Card View */}
+          <div className="mobile-view">
+            {filteredUsers.length > 0 ? (
+              filteredUsers.map((user) => (
+                <div key={user.id} className="mobile-user-card">
+                  <div className="mobile-card-header">
+                    <Group gap="sm">
+                      <Avatar color="blue" radius="xl">{user.name?.charAt(0)}</Avatar>
+                      <div>
+                        <Text size="sm" fw={500}>{user.name}</Text>
+                        <Text size="xs" c="dimmed">{user.email}</Text>
+                      </div>
+                    </Group>
+                  </div>
+
+                  <div className="mobile-card-body">
+                    <div className="mobile-card-row">
+                      <Text className="mobile-card-label">Role</Text>
+                      <Badge
+                        color={user.role === "ADMIN" ? "red" : "blue"}
+                        variant="light"
+                      >
+                        {user.role}
+                      </Badge>
+                    </div>
+
+                    <div className="mobile-card-row">
+                      <Text className="mobile-card-label">Status</Text>
+                      <Badge color="green" variant="dot">Active</Badge>
+                    </div>
+                  </div>
+
+                  <div className="mobile-card-actions" style={{ justifyContent: 'center' }}>
+                    <Button
+                      leftSection={<IconTrash size={16} />}
+                      variant="light"
+                      color="red"
+                      size="xs"
+                      onClick={() => deleteUser(user.id)}
+                      disabled={user.role === "ADMIN"}
+                    >
+                      Delete
+                    </Button>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <Center p="xl">
+                <Text c="dimmed">No users found.</Text>
+              </Center>
+            )}
+          </div>
         </Card>
       </Container>
 
-      <Modal opened={opened} onClose={close} title="Confirm Action" centered>
-        <div style={{ textAlign: "center", paddingBottom: "1rem" }}>
-          <IconAlertTriangle size={50} color="orange" style={{ marginBottom: "1rem" }} />
-          <Text size="lg" fw={500} mb="xs">Deactivate User?</Text>
-          <Text c="dimmed" size="sm" mb="xl">
-            Are you sure you want to deactivate <b>{userToDelete?.name}</b>? They will no longer be able to log in.
-          </Text>
-
-          <Group justify="center" gap="md">
-            <Button variant="default" onClick={close}>Cancel</Button>
-            <Button color="red" onClick={handleDelete}>Confirm Deactivation</Button>
-          </Group>
-        </div>
+      <Modal opened={opened} onClose={close} title="Add New User" centered>
+        <form onSubmit={form.onSubmit(handleAddUser)}>
+          <TextInput label="Name" placeholder="Full Name" {...form.getInputProps('name')} mb="sm" />
+          <TextInput label="Email" placeholder="user@example.com" {...form.getInputProps('email')} mb="sm" />
+          <TextInput label="Phone" placeholder="1234567890" {...form.getInputProps('phone')} mb="sm" />
+          <TextInput label="Password" type="password" placeholder="******" {...form.getInputProps('password')} mb="sm" />
+          <Select
+            label="Role"
+            placeholder="Select Role"
+            data={['USER', 'ADMIN', 'STUDENT']}
+            {...form.getInputProps('role')}
+            mb="lg"
+          />
+          <Button fullWidth type="submit" color="teal">Create User</Button>
+        </form>
       </Modal>
     </div>
   );

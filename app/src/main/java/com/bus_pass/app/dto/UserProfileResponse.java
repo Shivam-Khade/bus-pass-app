@@ -9,4 +9,8 @@ public class UserProfileResponse {
     private String email;
     private String role;
     private String phone;
+    private String adharUrl;
+    private String bonafideUrl;
+    private String photoUrl;
+    private String address;
 }

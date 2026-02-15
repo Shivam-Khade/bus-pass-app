@@ -11,11 +11,13 @@ import UserLayout from "./layouts/UserLayout";
 // Dashboards
 import AdminDashboard from "./pages/admin/Dashboard";
 import UserDashboard from "./pages/user/Dashboard";
+import Profile from "./pages/user/Profile";
 import ApplyPass from "./pages/user/ApplyPass";
 import MyPass from "./pages/user/MyPass";
 import Applications from "./pages/admin/Applications";
 import Passes from "./pages/admin/Passes";
 import Users from "./pages/admin/Users";
+import SosAlerts from "./pages/admin/SosAlerts";
 
 // Utils
 const getUser = () => {
@@ -40,9 +42,12 @@ const UserRoute = ({ children }) => {
 	return children;
 };
 
+import SmoothScroll from "./components/SmoothScroll";
+
 export default function App() {
 	return (
 		<BrowserRouter>
+			<SmoothScroll />
 			<Routes>
 				{/* Auth */}
 				<Route path="/" element={<Login />} />
@@ -61,6 +66,7 @@ export default function App() {
 					<Route path="applications" element={<Applications />} />
 					<Route path="passes" element={<Passes />} />
 					<Route path="users" element={<Users />} />
+					<Route path="sos-alerts" element={<SosAlerts />} />
 				</Route>
 
 				{/* User / Student Panel with Layout */}
@@ -75,6 +81,7 @@ export default function App() {
 					<Route index element={<UserDashboard />} />
 					<Route path="apply" element={<ApplyPass />} />
 					<Route path="my-pass" element={<MyPass />} />
+					<Route path="profile" element={<Profile />} />
 				</Route>
 
 				{/* Fallback */}
