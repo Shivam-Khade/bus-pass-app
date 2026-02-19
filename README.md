@@ -1,6 +1,6 @@
 📌 Problem Statement
   
-The existing bus pass system of PMPML currently provides only a daily pass facility, lacking flexible options such as monthly, quarterly, and yearly passes. This limitation reduces convenience for regular commuters like students and employees who require long-term travel solutions.
+The existing bus pass system of PMPML currently provides only a daily pass facility, lacking flexible options such as monthly, quarterly, and yearly passes. This limitation reduces convenience for regular commuters like normal users and students who require long-term travel solutions.
 
 Additionally, the current system does not include any emergency or safety mechanism for passengers. There is no integrated SOS feature that allows users to request immediate assistance during emergencies.
 
@@ -19,7 +19,7 @@ This solution enhances flexibility, safety, and digital accessibility compared t
 
 ✨ KEY FEATURES
 
-👤 For Users (Students/Users)
+👤 For Users (Normal Users / Students)
 
 📝 Apply for bus pass online
 
@@ -29,11 +29,11 @@ This solution enhances flexibility, safety, and digital accessibility compared t
 
 💳 Secure online payments via Razorpay
 
-📲 QR-based Digital E-Pass generation
+📲 QR-based Digital E-Pass verification
 
 📥 Download pass as PDF
 
-🆘 SOS alert with live location sharing
+🆘 SOS alert with location sharing
 
 🔑 For Admin
 
